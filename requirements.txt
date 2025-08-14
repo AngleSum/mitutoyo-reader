@@ -28,6 +28,10 @@ puremagic==1.30
 pydot==4.0.1
 PyMuPDF==1.26.3
 pyparsing==3.2.3
+PyQt5==5.15.11
+PyQt5-Qt5==5.15.2
+PyQt5_sip==12.17.0
+pyqtgraph==0.13.7
 python-dateutil==2.9.0.post0
 pytuyo @ git+https://github.com/rabryan/pytuyo.git@251848e96f8d331f11012f94e3fbe771e2fd34e5
 pytz==2025.2

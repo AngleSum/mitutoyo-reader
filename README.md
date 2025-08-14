@@ -1,6 +1,7 @@
 - Some overwrites to allow Windows support
 - Works for USB-ITN cables
 - Requires manual setup using zadig for Windows
+- Only tested on 543-701
 
 # Zadig Setup
 
@@ -19,3 +20,7 @@ Note: After this action the DATA button on the Mitutoyo device will no longer wo
 4. Browse my computer for drivers > Let me pick from a list of available drivers on my computer
 5. Select USB Input Device
 6. Done
+
+TO-DO:
+- Start/Stop button
+- Total number of values
