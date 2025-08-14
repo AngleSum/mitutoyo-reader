@@ -1,61 +1,51 @@
-#!/usr/bin/python3
-
-import sys
-import time
+from pytuyo import Pytuyo
+import usb.core
+import platform
 import logging
-import usb
+import usb.util
+import sys
 
-log = logging.getLogger(__name__)
-d = usb.core.find(idVendor=0x0fe7, idProduct=0x4001)
+VENDOR_ID = 0x0FE7
+PRODUCT_ID = 0x4001
 
-if d is None:
-    log.error("No Mitutoyo device matching 0fe7:4001 found")
+# Suppress pytuyo logging messages
+logging.getLogger("pytuyo").setLevel(logging.CRITICAL)
+
+# Patch the setup method if on Windows
+if platform.system() == "Windows":
+    def patched_setup(self):
+        self._usb_dev.reset()
+        self._usb_dev.set_configuration(1)
+        c = self._usb_dev.get_active_configuration()
+        self._epin = c.interfaces()[0].endpoints()[0]
+
+        bmRequestType = 0x40
+        self._usb_dev.ctrl_transfer(bmRequestType, 0x01, 0xA5A5, 0)
+
+        bmRequestType = 0xC0
+        resp = self._usb_dev.ctrl_transfer(bmRequestType, 0x02, 0, 0, 1)
+    
+    Pytuyo.setup = patched_setup
+
+device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
+
+if device is None:
+    print("Mitutoyo device not found.")
     sys.exit(1)
 
-# if d.is_kernel_driver_active(0):
-#     d.detach_kernel_driver(0)
-#except usb.USBError as e:
-#    pass # kernel driver is already detached
-#    #log.warning(str(e))
+try:
+    device.set_configuration()
+    # Attempt harmless control transfer
+    device.ctrl_transfer(0xC0, 0x02, 0, 0, 1)  # Just probe VCP response
+except usb.core.USBError as e:
+    print("Failed to communicate with device.")
+    print("This likely means it's still using the default HID driver.")
+    print("Use Zadig to install the WinUSB driver for this device.")
+    print(f"Error details: {e}")
+    sys.exit(1)
 
-d.reset()
-d.set_configuration(1)
-c = d.get_active_configuration()
-epin = d.get_active_configuration().interfaces()[0].endpoints()[0]
-bmRequestType=0x40 # Vendor Host-to-Device
-bRequest=0x01
-wValue=0xA5A5
-wIndex=0
-d.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex)
-
-bmRequestType=0xC0 # Vendor Device-to-Host
-bRequest=0x02
-wValue=0
-wIndex=0
-length=1
-res1 = d.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, length)
-log.debug("Device Vendor resp: {}".format(res1))
-
-bmRequestType=0x40 #0b01000000
-bRequest=0x03
-wValue=0
-wIndex=0
-data = b"1\r"
-
-d.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, data)
-
-MAX_PKT = 64
-reading = epin.read(MAX_PKT, timeout=1000)
-print("Raw reading:", reading)
-
-raw = bytes(reading)
-decoded = raw.decode(errors="ignore").strip()
-
-print("Decoded:", decoded)
-
-if decoded.startswith("0"):
-    value_str = decoded[3:]  # skip "01A"
-    value = float(value_str)
-    print("Measurement:", value, "mm")
-else:
-    print("Non-measurement response:", decoded)
+# Read
+d = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
+device = Pytuyo(d)
+value = device.get_reading(timeout=2)
+print(value)
