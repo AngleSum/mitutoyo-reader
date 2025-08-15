@@ -37,22 +37,26 @@ def windows_patch(self):
 def find_device():
     device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
     if device is None:
-        print("Mitutoyo device not found.")
-        sys.exit(1)
+        error(
+            "Device Not Found",
+            "Mitutoyo device not found."
+        )
     return device
 
 def vcp_test(device):
     try:
         device.ctrl_transfer(0xC0, 0x02, 0, 0, 1)  # Probe VCP
     except NotImplementedError as e:
-        print("Device likely still using HID driver — use Zadig to install WinUSB.")
-        print("Details:", e)
-        sys.exit(1)
+        error(
+            "Error",
+            "Device likely still using HID driver — use Zadig to install WinUSB.\n Details:", e
+        )
     except usb.core.USBError as e:
-        print("USB communication failed.")
-        print("Details:", e)
-        sys.exit(1)
-
+        error(
+            "Error",
+            "USB communication failed.\n Details:", e
+        )
+        
 # Qt helpers
 def prompt_interval_qt(parent=None, default=0.05):
     """Ask for update interval (seconds) via Qt dialog; re-prompt until valid."""
@@ -71,6 +75,19 @@ def prompt_interval_qt(parent=None, default=0.05):
         )
         if choice == QMessageBox.No:
             sys.exit(0)
+
+# Error Message
+def error(title, message, details=None):
+    """Display a critical error message and exit."""
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Critical)
+    msg.setWindowTitle(title)
+    msg.setText(message)
+    if details:
+        msg.setInformativeText(str(details))
+    msg.setStandardButtons(QMessageBox.Ok)
+    msg.exec_()
+    sys.exit(1)
 
 def main():
     # Apply patch for Windows
@@ -183,7 +200,10 @@ def main():
                 readings_count += 1                           # <-- added
                 label_count.setText(f"Readings: {readings_count}")  # <-- added
         except usb.core.USBError as e:
-            print("Read error:", e)
+            error(
+                "Error",
+                "Read error:", e
+            )
 
     timer = QtCore.QTimer()
     timer.timeout.connect(update)
