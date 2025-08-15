@@ -11,3 +11,13 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# PyInstaller build artifacts
+build/
+dist/
+
+# PyInstaller spec file (optional, ignore if you don't track it)
+*.spec
+
+# Measurement logs
+data/

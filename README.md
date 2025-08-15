@@ -22,7 +22,7 @@ Built on [pytuyo](https://github.com/rabryan/pytuyo) for USB communication.
 2. Setup Zadig driver (windows) (see [here](#windows-zadig-setup))
 3. Run the application:
     ```bash
-    run.exe
+    Mitutoyo_Reader.exe
     ```
 4. **Set the update interval** in seconds
 5. Press **Start** to begin capturing readings
