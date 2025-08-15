@@ -7,7 +7,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 from PyQt5.QtWidgets import (
     QInputDialog, QMessageBox,
-    QPushButton, QWidget, QVBoxLayout, QHBoxLayout
+    QPushButton, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel  # <-- added
 )
 import time
 import csv
@@ -141,6 +142,17 @@ def main():
     layout.setStretch(0, 1)
     layout.setStretch(1, 0)
 
+    # --- Added: readings counter label (inserted without changing existing widgets) ---
+    stats = QHBoxLayout()
+    stats.setContentsMargins(0, 0, 0, 0)
+    stats.setSpacing(0)
+    label_count = QLabel("Readings: 0")
+    label_count.setStyleSheet("font-size: 18px; padding: 4px 0;")
+    stats.addWidget(label_count)
+    stats.addStretch(1)
+    layout.insertLayout(1, stats)  # place between plot and buttons
+    # --- end added ---
+
     root.resize(1000, 680)
     root.show()
 
@@ -148,6 +160,7 @@ def main():
     data_x, data_y = [], []
     start_time = time.time()
     is_running = False
+    readings_count = 0  # <-- added
 
     def append_csv(val):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -156,6 +169,7 @@ def main():
             writer.writerow([ts, val])
 
     def update():
+        nonlocal readings_count  # <-- added
         if not is_running:
             return
         t = time.time() - start_time
@@ -166,6 +180,8 @@ def main():
                 data_y.append(val)
                 curve.setData(data_x, data_y)
                 append_csv(val)
+                readings_count += 1                           # <-- added
+                label_count.setText(f"Readings: {readings_count}")  # <-- added
         except usb.core.USBError as e:
             print("Read error:", e)
 
